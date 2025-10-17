@@ -116,15 +116,11 @@ export default function Home() {
         <Text style={styles.subtitle}>Space: {petState.space}</Text>
 
         {/* Stats Display */}
-        <View style={styles.statsContainer}>
-          <StatHearts label="💚 Mood" value={petState.state_mood} />
-          <StatHearts label="🍖 Stomach" value={petState.state_stomach} />
-          <StatHearts label="⚡ Energy" value={petState.state_energy} />
-          <StatHearts label="❤️ Health" value={petState.state_health} />
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>🪙 Coins</Text>
-            <Text style={styles.statValue}>{petState.coin || 0}</Text>
-          </View>
+        <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 20}}>
+          <StatHearts label="Mood" value={petState.state_mood} />
+          <StatHearts label="Stomach" value={petState.state_stomach} />
+          <StatHearts label="Energy" value={petState.state_energy} />
+          <StatHearts label="Health" value={petState.state_health} />
         </View>
 
         <View style={styles.petSection}>
@@ -143,6 +139,11 @@ export default function Home() {
               shadow_color="#E0E0E0"
             />
           </TouchableOpacity>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Coins</Text>
+            <Text style={styles.statValue}>{petState.coin || 0}</Text>
+          </View>
 
           {/* ✅ Buttons to change animation */}
           <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 40, flexWrap: "wrap" }}>
@@ -212,23 +213,6 @@ const styles = StyleSheet.create({
     color: "#D32F2F",
     marginBottom: 20,
     textAlign: "center",
-  },
-  statsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    maxWidth: 500,
-    marginBottom: 20,
-    backgroundColor: "#F8F6FF",
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
   },
   statItem: {
     alignItems: "center",

@@ -14,18 +14,18 @@ const StatHearts: React.FC<StatHeartsProps> = ({ label, value }) => {
   for (let i = 0; i < 3; i++) {
     const filled = filledHearts - i;
     if (filled >= 1) {
-      hearts.push(<Ionicons key={i} name="heart" size={24} color="#FF6499" style={styles.heart} />);
+      hearts.push(<Ionicons key={i} name="heart" size={20} color="#FF6499" style={styles.heart} />);
     } else if (filled > 0) {
       hearts.push(
         <View key={i} style={styles.heart}>
-          <Ionicons name="heart-outline" size={24} color="#FF6499" />
+          <Ionicons name="heart-outline" size={20} color="#FF6499" />
           <View style={[styles.partialFill, { width: `${filled * 100}%` }]}>
-            <Ionicons name="heart" size={24} color="#FF6499" />
+            <Ionicons name="heart" size={20} color="#FF6499" />
           </View>
         </View>
       );
     } else {
-      hearts.push(<Ionicons key={i} name="heart-outline" size={24} color="#FF6499" style={styles.heart} />);
+      hearts.push(<Ionicons key={i} name="heart-outline" size={20} color="#FF6499" style={styles.heart} />);
     }
   }
 
@@ -41,10 +41,10 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: 'center',
     margin: 8,
-    minWidth: 80,
+    minWidth: 70,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#4B3A73',
     marginBottom: 4,
     fontWeight: '600',
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   heart: {
-    marginHorizontal: 2,
+    marginHorizontal: 0.5,
   },
   partialFill: {
     position: 'absolute',

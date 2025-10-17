@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button, StyleSheet, Text, View, ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import PetRender from "./PetRender";
+import StatHearts from "./StatHearts";
 import { ApiService, PetState } from "@/services/api";
 import { StorageService } from "@/services/storage";
 
@@ -116,22 +117,10 @@ export default function Home() {
 
         {/* Stats Display */}
         <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>💚 Mood</Text>
-            <Text style={styles.statValue}>{petState.state_mood}/100</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>🍖 Stomach</Text>
-            <Text style={styles.statValue}>{petState.state_stomach}/100</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>⚡ Energy</Text>
-            <Text style={styles.statValue}>{petState.state_energy}/100</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>❤️ Health</Text>
-            <Text style={styles.statValue}>{petState.state_health}/100</Text>
-          </View>
+          <StatHearts label="💚 Mood" value={petState.state_mood} />
+          <StatHearts label="🍖 Stomach" value={petState.state_stomach} />
+          <StatHearts label="⚡ Energy" value={petState.state_energy} />
+          <StatHearts label="❤️ Health" value={petState.state_health} />
           <View style={styles.statItem}>
             <Text style={styles.statLabel}>🪙 Coins</Text>
             <Text style={styles.statValue}>{petState.coin || 0}</Text>

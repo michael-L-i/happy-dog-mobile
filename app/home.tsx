@@ -16,6 +16,17 @@ export default function Home() {
     loadPetState();
   }, []);
 
+  // Auto-reset animations after 5 seconds (matching main.js timing)
+  useEffect(() => {
+    if (animation === "happy" || animation === "eating" || animation === "playingToy" || animation === "havingTreat") {
+      const timer = setTimeout(() => {
+        setAnimation("idle");
+      }, 4000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [animation]);
+
   const loadPetState = async () => {
     try {
       setIsLoading(true);
@@ -150,7 +161,6 @@ export default function Home() {
             <Button title="Sleep" onPress={() => setAnimation("sleeping")} />
           </View>
 
-          <Button title="Refresh State" onPress={loadPetState} />
           <View style={{ marginTop: 12 }}>
             <Button title="Leave Space" color="#D32F2F" onPress={handleLeaveState} />
           </View>

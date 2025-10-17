@@ -140,7 +140,7 @@ export default function Home() {
 
         <View style={styles.petSection}>
           {/* ✅ Render Pet */}
-          <View style={styles.petWrapper}>
+          <TouchableOpacity style={styles.petWrapper} onPress={() => setAnimation("happy")} activeOpacity={1}>
             <PetRender
               breed={petState.breed}
               goodies_on={{
@@ -153,16 +153,13 @@ export default function Home() {
               animation={animation}
               shadow_color="#E0E0E0"
             />
-          </View>
+          </TouchableOpacity>
 
           {/* ✅ Buttons to change animation */}
           <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 40, flexWrap: "wrap" }}>
-            <Button title="Idle" onPress={() => setAnimation("idle")} />
-            <Button title="Happy" onPress={() => setAnimation("happy")} />
-            <Button title="Eating" onPress={() => setAnimation("eating")} />
+            <Button title="Feed" onPress={() => setAnimation("eating")} />
             <Button title="Toy" onPress={() => setAnimation("playingToy")} />
             <Button title="Treat" onPress={() => setAnimation("havingTreat")} />
-            <Button title="Sleep" onPress={() => setAnimation("sleeping")} />
           </View>
         </View>
       </View>

@@ -123,20 +123,22 @@ export default function Home() {
           </View>
         </View>
 
-        <View style={{ flex: 1 }}>
+        <View style={styles.petSection}>
           {/* ✅ Render Pet */}
-          <PetRender
-            breed={petState.breed}
-            goodies_on={{
-              slot1: 0, 
-              slot2: 0, 
-              slot3: 0,   
-              slot4: 0,
-              slot5: 0,
-            }}
-            animation={animation}
-            shadow_color="#E0E0E0"
-          />
+          <View style={styles.petWrapper}>
+            <PetRender
+              breed={petState.breed}
+              goodies_on={{
+                slot1: 0, 
+                slot2: 0, 
+                slot3: 0,   
+                slot4: 0,
+                slot5: 0,
+              }}
+              animation={animation}
+              shadow_color="#E0E0E0"
+            />
+          </View>
 
           {/* ✅ Buttons to change animation */}
           <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 40, flexWrap: "wrap" }}>
@@ -186,6 +188,17 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: "#666",
+  },
+  petSection: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 32,
+  },
+  petWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+    transform: [{ scale: 0.85 }],
   },
   errorText: {
     fontSize: 18,

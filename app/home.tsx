@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Button, StyleSheet, Text, View, ActivityIndicator, ScrollView } from "react-native";
+import { Button, StyleSheet, Text, View, ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import PetRender from "./PetRender";
 import { ApiService, PetState } from "@/services/api";
@@ -106,6 +106,10 @@ export default function Home() {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <TouchableOpacity style={styles.backArrow} onPress={handleLeaveState}>
+        <Text style={styles.backArrowText}>←</Text>
+      </TouchableOpacity>
+      
       <View style={styles.container}>
         <Text style={styles.title}>{petState.pet}</Text>
         <Text style={styles.subtitle}>Space: {petState.space}</Text>
@@ -160,10 +164,6 @@ export default function Home() {
             <Button title="Treat" onPress={() => setAnimation("havingTreat")} />
             <Button title="Sleep" onPress={() => setAnimation("sleeping")} />
           </View>
-
-          <View style={{ marginTop: 12 }}>
-            <Button title="Leave Space" color="#D32F2F" onPress={handleLeaveState} />
-          </View>
         </View>
       </View>
     </ScrollView>
@@ -174,6 +174,17 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     backgroundColor: "#fff",
+  },
+  backArrow: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    zIndex: 10,
+    padding: 10,
+  },
+  backArrowText: {
+    fontSize: 32,
+    color: "#2B1B5A",
   },
   container: {
     flex: 1,

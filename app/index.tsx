@@ -1,8 +1,31 @@
 import { useRouter } from "expo-router";
 import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { StorageService } from "@/services/storage";
 
 export default function Landing() {
   const router = useRouter();
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    // Use setTimeout to ensure navigation happens after mount
+    const checkSession = () => {
+      const session = StorageService.getSession();
+      const pet = StorageService.getPet();
+
+      if (session && pet) {
+        console.log("Existing session found, redirecting to home...");
+        // Delay navigation to ensure Root Layout is mounted
+        setTimeout(() => {
+          router.replace("/home" as any);
+        }, 100);
+      } else {
+        setIsChecking(false);
+      }
+    };
+
+    checkSession();
+  }, [router]);
 
   const handleGetNewDog = () => {
     // Navigate to adoption/creation flow
@@ -12,6 +35,11 @@ export default function Landing() {
   const handleExistingDog = () => {
     router.push("/creation-2" as any);
   };
+  
+  // Show nothing while checking for existing session
+  if (isChecking) {
+    return <View style={styles.container} />;
+  }
 
   const openTerms = () => {
     Linking.openURL("https://app.termly.io/policy-viewer/policy.html?policyUUID=2badbde0-9daf-4e2e-8c74-48d7089d328e");

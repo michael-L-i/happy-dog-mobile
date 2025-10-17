@@ -1,57 +1,218 @@
-import React, { useState } from "react";
-import { Button, StyleSheet, Text, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Button, StyleSheet, Text, View, ActivityIndicator, ScrollView } from "react-native";
+import { useRouter } from "expo-router";
 import PetRender from "./PetRender";
+import { ApiService, PetState } from "@/services/api";
+import { StorageService } from "@/services/storage";
 
 export default function Home() {
+  const router = useRouter();
   const [animation, setAnimation] = useState<"idle" | "happy" | "eating" | "playingToy" | "havingTreat" | "sleeping">("idle");
+  const [petState, setPetState] = useState<PetState | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadPetState();
+  }, []);
+
+  const loadPetState = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Get session and pet info from storage
+      const session = StorageService.getSession();
+      const pet = StorageService.getPet();
+
+      if (!session || !pet) {
+        console.log("No session or pet found, redirecting to index...");
+        router.replace("/" as any);
+        return;
+      }
+
+      console.log("Loading pet state for:", { pet: pet.name, space: session.space });
+
+      // Fetch pet state from API
+      const state = await ApiService.getState(pet.name, session.space);
+
+      if (!state) {
+        setError("Pet not found");
+        return;
+      }
+
+      console.log("Pet state loaded:", state);
+      setPetState(state);
+
+      // Automatically set animation based on energy level
+      if (state.state_energy < 5) {
+        setAnimation("sleeping");
+      } else {
+        setAnimation("idle");
+      }
+    } catch (err) {
+      console.error("Error loading pet state:", err);
+      setError("Failed to load pet");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#FF6499" />
+        <Text style={styles.loadingText}>Loading your pet...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button title="Retry" onPress={loadPetState} />
+      </View>
+    );
+  }
+
+  if (!petState) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>No pet found</Text>
+        <Button title="Go Back" onPress={() => router.replace("/" as any)} />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Home View</Text>
-      <Text style={styles.subtitle}>(Main big one)</Text>
-      <View style={{ flex: 1 }}>
-        {/* ✅ Render Pet */}
-        <PetRender
-          breed={7}
-          goodies_on={{
-            slot1: 421, 
-            slot2: 17, 
-            slot3: 0,   
-            slot4: 347,
-            slot5: 371,
-          }}
-          animation={animation}
-          shadow_color="#E0E0E0"
-        />
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        <Text style={styles.title}>{petState.pet}</Text>
+        <Text style={styles.subtitle}>Space: {petState.space}</Text>
 
-        {/* ✅ Buttons to change animation */}
-        <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 40 }}>
-          <Button title="Idle" onPress={() => setAnimation("idle")} />
-          <Button title="Happy" onPress={() => setAnimation("happy")} />
-          <Button title="Eating" onPress={() => setAnimation("eating")} />
-          <Button title="Toy" onPress={() => setAnimation("playingToy")} />
-          <Button title="Treat" onPress={() => setAnimation("havingTreat")} />
-          <Button title="Sleep" onPress={() => setAnimation("sleeping")} />
+        {/* Stats Display */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>💚 Mood</Text>
+            <Text style={styles.statValue}>{petState.state_mood}/100</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>🍖 Stomach</Text>
+            <Text style={styles.statValue}>{petState.state_stomach}/100</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>⚡ Energy</Text>
+            <Text style={styles.statValue}>{petState.state_energy}/100</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>❤️ Health</Text>
+            <Text style={styles.statValue}>{petState.state_health}/100</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>🪙 Coins</Text>
+            <Text style={styles.statValue}>{petState.coin || 0}</Text>
+          </View>
+        </View>
+
+        <View style={{ flex: 1 }}>
+          {/* ✅ Render Pet */}
+          <PetRender
+            breed={petState.breed}
+            goodies_on={{
+              slot1: 0, 
+              slot2: 0, 
+              slot3: 0,   
+              slot4: 0,
+              slot5: 0,
+            }}
+            animation={animation}
+            shadow_color="#E0E0E0"
+          />
+
+          {/* ✅ Buttons to change animation */}
+          <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 40, flexWrap: "wrap" }}>
+            <Button title="Idle" onPress={() => setAnimation("idle")} />
+            <Button title="Happy" onPress={() => setAnimation("happy")} />
+            <Button title="Eating" onPress={() => setAnimation("eating")} />
+            <Button title="Toy" onPress={() => setAnimation("playingToy")} />
+            <Button title="Treat" onPress={() => setAnimation("havingTreat")} />
+            <Button title="Sleep" onPress={() => setAnimation("sleeping")} />
+          </View>
+
+          <Button title="Refresh State" onPress={loadPetState} />
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    backgroundColor: "#fff",
+  },
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fff",
+    padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
+    color: "#2B1B5A",
+    marginTop: 20,
   },
   subtitle: {
     fontSize: 16,
-    marginTop: 8,
+    marginTop: 4,
     color: "#666",
+    marginBottom: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666",
+  },
+  errorText: {
+    fontSize: 18,
+    color: "#D32F2F",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  statsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    maxWidth: 500,
+    marginBottom: 20,
+    backgroundColor: "#F8F6FF",
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  statItem: {
+    alignItems: "center",
+    margin: 8,
+    minWidth: 80,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: "#4B3A73",
+    marginBottom: 4,
+    fontWeight: "600",
+  },
+  statValue: {
+    fontSize: 16,
+    color: "#2B1B5A",
+    fontWeight: "bold",
   },
 });

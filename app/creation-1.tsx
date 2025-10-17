@@ -1,6 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { ApiService } from "@/services/api";
+import { StorageService } from "@/services/storage";
 
 export default function Creation1() {
   const router = useRouter();
@@ -8,6 +10,7 @@ export default function Creation1() {
   const [petName, setPetName] = useState("");
   const [nickname, setNickname] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   
   const maxPetIdx = 12;
 
@@ -38,6 +41,19 @@ export default function Creation1() {
     setPickedIdx((prev) => (prev < maxPetIdx ? prev + 1 : 0));
   };
 
+  const ensureClientId = async (): Promise<string> => {
+    let clientId = StorageService.getClientId();
+    
+    if (!clientId) {
+      console.log("No client_id found, registering new install...");
+      clientId = await ApiService.registerNewInstall();
+      StorageService.setClientId(clientId);
+      console.log("New client_id registered:", clientId);
+    }
+    
+    return clientId;
+  };
+
   const handleSubmit = async () => {
     if (!petName.trim()) {
       setErrorMessage("Please give your pet a name");
@@ -49,20 +65,45 @@ export default function Creation1() {
       return;
     }
 
-    // TODO: Implement API call to create new pet and space
+    setIsLoading(true);
+    setErrorMessage("");
+
     try {
-      // const response = await createPet({
-      //   petName,
-      //   nickname,
-      //   breed: pickedIdx
-      // });
+      // 1. Ensure we have a client_id
+      const clientId = await ensureClientId();
       
-      // Temporary: just navigate to home
-      setErrorMessage("");
-      router.push("/home" as any);
+      if (!clientId) {
+        setErrorMessage("Sorry, something went wrong. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Create the pet
+      console.log("Creating pet:", { petName, breed: pickedIdx, clientId });
+      const response = await ApiService.createPet(petName.trim(), pickedIdx, clientId);
+      console.log("Pet created:", response);
+
+      // 3. Store session and pet info locally
+      StorageService.setSession(nickname.trim(), response.space);
+      StorageService.setPet(petName.trim(), pickedIdx);
+      StorageService.storeRecentSpace(response.space);
+
+      // 4. Clear old goodies data for new pet
+      StorageService.setGoodiesOwned([
+        { id: 1, type: 1 },
+        { id: 23, type: 2 },
+        { id: 31, type: 3 }
+      ]);
+      StorageService.setPutOnGoodies([false, true, false]);
+
+      // 5. Navigate to home
+      console.log("Navigating to home...");
+      router.replace("/home" as any);
     } catch (err) {
-      console.error(err);
+      console.error("Error creating pet:", err);
       setErrorMessage("Failed to create pet. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -120,8 +161,16 @@ export default function Creation1() {
 
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
-          <TouchableOpacity style={styles.primaryButton} onPress={handleSubmit}>
-            <Text style={styles.primaryButtonText}>Woof! Let's go</Text>
+          <TouchableOpacity 
+            style={[styles.primaryButton, isLoading && styles.primaryButtonDisabled]} 
+            onPress={handleSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Woof! Let's go</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -254,6 +303,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     elevation: 6,
     width: "100%",
+  },
+  primaryButtonDisabled: {
+    backgroundColor: "#CCCCCC",
+    shadowOpacity: 0.2,
   },
   primaryButtonText: {
     color: "#fff",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button, StyleSheet, Text, View, ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import PetRender from "./PetRender";
@@ -12,9 +12,36 @@ export default function Home() {
   const [petState, setPetState] = useState<PetState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cachedActions, setCachedActions] = useState<string[]>([]);
+  const [isActionLocked, setIsActionLocked] = useState(false);
+  const batchUpdateTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadPetState();
+    
+    // Load cached actions from storage
+    const savedActions = StorageService.getCachedActions();
+    setCachedActions(savedActions);
+
+    // Set up periodic batch update (every 15 seconds)
+    batchUpdateTimerRef.current = setInterval(() => {
+      const currentActions = StorageService.getCachedActions();
+      if (currentActions.length > 0) {
+        performBatchUpdateWithActions(currentActions);
+      }
+    }, 15000);
+
+    return () => {
+      // Cleanup: perform final batch update and clear timer
+      if (batchUpdateTimerRef.current) {
+        clearInterval(batchUpdateTimerRef.current);
+      }
+      // Perform final batch update with latest actions from storage
+      const finalActions = StorageService.getCachedActions();
+      if (finalActions.length > 0) {
+        performBatchUpdateWithActions(finalActions);
+      }
+    };
   }, []);
 
   // Auto-reset animations after 5 seconds (matching main.js timing)
@@ -22,11 +49,17 @@ export default function Home() {
     if (animation === "happy" || animation === "eating" || animation === "playingToy" || animation === "havingTreat") {
       const timer = setTimeout(() => {
         setAnimation("idle");
-      }, 4000);
+        setIsActionLocked(false);
+      }, 3000);
       
       return () => clearTimeout(timer);
     }
   }, [animation]);
+
+  // Update storage whenever cached actions change
+  useEffect(() => {
+    StorageService.setCachedActions(cachedActions);
+  }, [cachedActions]);
 
   const loadPetState = async () => {
     try {
@@ -70,9 +103,122 @@ export default function Home() {
     }
   };
 
+  const performBatchUpdateWithActions = async (actions: string[]) => {
+    if (actions.length === 0) {
+      return;
+    }
+
+    try {
+      const session = StorageService.getSession();
+      const pet = StorageService.getPet();
+
+      if (!session || !pet) {
+        return;
+      }
+
+      console.log("Performing batch update with actions:", actions);
+
+      // Call the API to update actions
+      const response = await ApiService.batchActionUpdate(
+        pet.name,
+        session.space,
+        session.user,
+        actions
+      );
+
+      console.log("Batch update response:", response);
+
+      // Update pet state with response
+      if (response) {
+        setPetState((prevState) => {
+          if (!prevState) return prevState;
+          return {
+            ...prevState,
+            ...response,
+          };
+        });
+      }
+
+      // Clear cached actions after successful update
+      setCachedActions([]);
+      StorageService.setCachedActions([]);
+    } catch (err) {
+      console.error("Error performing batch update:", err);
+    }
+  };
+
+  const performBatchUpdate = async () => {
+    await performBatchUpdateWithActions(cachedActions);
+  };
+
+  const handleAction = (action: "feed" | "toy" | "treat") => {
+    if (isActionLocked || !petState) {
+      return;
+    }
+
+    setIsActionLocked(true);
+
+    const session = StorageService.getSession();
+    if (!session) {
+      return;
+    }
+
+    // Update local state immediately for instant feedback
+    const updatedState = { ...petState };
+    const now = new Date().toISOString();
+
+    // Update activity arrays
+    if (!updatedState.activity) {
+      updatedState.activity = [];
+      updatedState.time = [];
+      updatedState.by_user = [];
+    }
+    updatedState.activity.unshift(action);
+    updatedState.time!.unshift(now);
+    updatedState.by_user!.unshift(session.user);
+
+    // Update coin
+    updatedState.coin = (updatedState.coin || 0) + 1;
+
+    // Update stats based on action
+    switch (action) {
+      case "feed":
+        // Feed: +50 stomach, -1 energy
+        updatedState.state_stomach = Math.min(updatedState.state_stomach + 50, 100);
+        updatedState.state_energy = Math.max(updatedState.state_energy - 1, 0);
+        setAnimation("eating");
+        break;
+      case "treat":
+        // Treat: +2 stomach, +5 mood, -1 energy
+        updatedState.state_stomach = Math.min(updatedState.state_stomach + 2, 100);
+        updatedState.state_mood = Math.min(updatedState.state_mood + 5, 100);
+        updatedState.state_energy = Math.max(updatedState.state_energy - 1, 0);
+        setAnimation("havingTreat");
+        break;
+      case "toy":
+        // Toy: +20 mood, -5 energy
+        updatedState.state_mood = Math.min(updatedState.state_mood + 20, 100);
+        updatedState.state_energy = Math.max(updatedState.state_energy - 5, 0);
+        setAnimation("playingToy");
+        break;
+    }
+
+    // Update state
+    setPetState(updatedState);
+
+    // Add action to cached actions
+    setCachedActions([...cachedActions, action]);
+
+    console.log(`Action ${action} performed. Updated state:`, updatedState);
+  };
+
   const handleLeaveState = () => {
+    // Perform final batch update before leaving
+    performBatchUpdate();
+    
     StorageService.clearSession();
     StorageService.clearPet();
+    StorageService.setCachedActions([]);
     setPetState(null);
     setAnimation("idle");
     router.replace("/" as any);
@@ -145,11 +291,23 @@ export default function Home() {
             <Text style={styles.statValue}>{petState.coin || 0}</Text>
           </View>
 
-          {/* ✅ Buttons to change animation */}
+          {/* ✅ Action Buttons */}
           <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 40, flexWrap: "wrap" }}>
-            <Button title="Feed" onPress={() => setAnimation("eating")} />
-            <Button title="Toy" onPress={() => setAnimation("playingToy")} />
-            <Button title="Treat" onPress={() => setAnimation("havingTreat")} />
+            <Button 
+              title="Feed" 
+              onPress={() => handleAction("feed")} 
+              disabled={isActionLocked}
+            />
+            <Button 
+              title="Toy" 
+              onPress={() => handleAction("toy")} 
+              disabled={isActionLocked}
+            />
+            <Button 
+              title="Treat" 
+              onPress={() => handleAction("treat")} 
+              disabled={isActionLocked}
+            />
           </View>
         </View>
       </View>

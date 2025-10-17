@@ -58,6 +58,14 @@ export default function Home() {
     }
   };
 
+  const handleLeaveState = () => {
+    StorageService.clearSession();
+    StorageService.clearPet();
+    setPetState(null);
+    setAnimation("idle");
+    router.replace("/" as any);
+  };
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -141,6 +149,9 @@ export default function Home() {
           </View>
 
           <Button title="Refresh State" onPress={loadPetState} />
+          <View style={{ marginTop: 12 }}>
+            <Button title="Leave Space" color="#D32F2F" onPress={handleLeaveState} />
+          </View>
         </View>
       </View>
     </ScrollView>

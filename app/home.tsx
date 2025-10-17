@@ -259,7 +259,6 @@ export default function Home() {
       
       <View style={styles.container}>
         <Text style={styles.title}>{petState.pet}</Text>
-        <Text style={styles.subtitle}>Space: {petState.space}</Text>
 
         {/* Stats Display */}
         <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 20}}>
@@ -292,22 +291,31 @@ export default function Home() {
           </View>
 
           {/* ✅ Action Buttons */}
-          <View style={{ flexDirection: "row", justifyContent: "space-around", marginBottom: 40, flexWrap: "wrap" }}>
-            <Button 
-              title="Feed" 
-              onPress={() => handleAction("feed")} 
+          <View style={styles.actionButtonsContainer}>
+            <TouchableOpacity
+              style={[styles.actionButton, isActionLocked && styles.actionButtonDisabled]}
+              onPress={() => handleAction("feed")}
               disabled={isActionLocked}
-            />
-            <Button 
-              title="Toy" 
-              onPress={() => handleAction("toy")} 
+              activeOpacity={1}
+            >
+              <Text style={styles.actionButtonText}>Feed</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, isActionLocked && styles.actionButtonDisabled]}
+              onPress={() => handleAction("toy")}
               disabled={isActionLocked}
-            />
-            <Button 
-              title="Treat" 
-              onPress={() => handleAction("treat")} 
+              activeOpacity={1}
+            >
+              <Text style={styles.actionButtonText}>Toy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, isActionLocked && styles.actionButtonDisabled]}
+              onPress={() => handleAction("treat")}
               disabled={isActionLocked}
-            />
+              activeOpacity={1}
+            >
+              <Text style={styles.actionButtonText}>Treat</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -343,11 +351,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#2B1B5A",
     marginTop: 20,
-  },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 4,
-    color: "#666",
     marginBottom: 20,
   },
   loadingText: {
@@ -387,5 +390,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#2B1B5A",
     fontWeight: "bold",
+  },
+  actionButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 40,
+    flexWrap: "wrap",
+    width: '100%',
+  },
+  actionButton: {
+    backgroundColor: "#FF6499",
+    borderRadius: 30,
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    margin: 5,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  actionButtonDisabled: {
+    backgroundColor: "#DBDBDB",
   },
 });

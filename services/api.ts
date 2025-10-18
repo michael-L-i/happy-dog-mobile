@@ -15,6 +15,10 @@ export interface PetState {
   state_energy: number;
   state_health: number;
   coin: number;
+  xp?: number;
+  state_xp?: number;
+  hearts?: number;
+  state_hearts?: number;
   activity?: string[];
   time?: string[];
   by_user?: string[];
@@ -267,4 +271,3 @@ export class ApiService {
     }
   }
 }
-

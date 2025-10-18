@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Button, StyleSheet, Text, View, ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
+import { Button, StyleSheet, Text, View, ActivityIndicator, ScrollView, TouchableOpacity, Image } from "react-native";
 import { useRouter } from "expo-router";
 import PetRender from "./PetRender";
 import StatHearts from "./StatHearts";
@@ -251,6 +251,10 @@ export default function Home() {
     );
   }
 
+  const coinValue = petState.coin ?? 0;
+  const xpValue = petState.xp ?? petState.state_xp ?? 0;
+  const heartValue = petState.hearts ?? petState.state_hearts ?? petState.state_health ?? 0;
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <TouchableOpacity style={styles.backArrow} onPress={handleLeaveState}>
@@ -285,9 +289,19 @@ export default function Home() {
             />
           </TouchableOpacity>
 
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Coins</Text>
-            <Text style={styles.statValue}>{petState.coin || 0}</Text>
+          <View style={styles.resourceRow}>
+            <View style={styles.resourceItem}>
+              <Image source={require("../images/heart.png")} style={styles.resourceIcon} />
+              <Text style={styles.resourceValue}>{heartValue}</Text>
+            </View>
+            <View style={styles.resourceItem}>
+              <Image source={require("../assets/general/star.png")} style={styles.resourceIcon} />
+              <Text style={styles.resourceValue}>{xpValue}</Text>
+            </View>
+            <View style={styles.resourceItem}>
+              <Image source={require("../assets/general/coin.png")} style={styles.resourceIcon} />
+              <Text style={styles.resourceValue}>{coinValue}</Text>
+            </View>
           </View>
 
           {/* ✅ Action Buttons */}
@@ -375,21 +389,27 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-  statItem: {
+  resourceRow: {
+    flexDirection: "row",
     alignItems: "center",
-    margin: 8,
-    minWidth: 80,
+    justifyContent: "center",
+    marginTop: 12,
+    marginBottom: 24,
   },
-  statLabel: {
+  resourceItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 10,
+  },
+  resourceIcon: {
+    width: 22,
+    height: 22,
+    resizeMode: "contain",
+    marginRight: 6,
+  },
+  resourceValue: {
     fontSize: 14,
-    color: "#4B3A73",
-    marginBottom: 4,
-    fontWeight: "600",
-  },
-  statValue: {
-    fontSize: 16,
     color: "#2B1B5A",
-    fontWeight: "bold",
   },
   actionButtonsContainer: {
     flexDirection: "row",

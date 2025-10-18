@@ -31,8 +31,8 @@ const StatHearts: React.FC<StatHeartsProps> = ({ label, value }) => {
 
   return (
     <View style={styles.statItem}>
-      <Text style={styles.statLabel}>{label}</Text>
       <View style={styles.heartsContainer}>{hearts}</View>
+      <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 };
@@ -43,14 +43,14 @@ const styles = StyleSheet.create({
     margin: 8,
     minWidth: 70,
   },
+  heartsContainer: {
+    flexDirection: 'row',
+  },
   statLabel: {
     fontSize: 12,
     color: '#4B3A73',
-    marginBottom: 4,
+    marginTop: 4,
     fontWeight: '600',
-  },
-  heartsContainer: {
-    flexDirection: 'row',
   },
   heart: {
     marginHorizontal: 0.5,

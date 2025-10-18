@@ -1,6 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { ApiService } from "@/services/api";
+import { StorageService } from "@/services/storage";
 
 export default function Creation2() {
   const router = useRouter();
@@ -8,6 +10,13 @@ export default function Creation2() {
   const [nickname, setNickname] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [recentSpaces, setRecentSpaces] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Load recent spaces from storage
+    const spaces = StorageService.getRecentSpaces();
+    setRecentSpaces(spaces);
+  }, []);
 
   const handleEnterSpace = async () => {
     if (!spaceName.trim()) {
@@ -20,25 +29,41 @@ export default function Creation2() {
       return;
     }
 
-    // TODO: Implement API call to check if space exists and get pets
-    // For now, just navigate to home
+    setIsLoading(true);
+    setErrorMessage("");
+
     try {
-      // const response = await getPets(spaceName);
-      // const pets = await response.json();
+      console.log("Checking if space exists:", spaceName.trim());
+      
+      // 1. Check if space exists by getting pets
+      const pets = await ApiService.getPets(spaceName.trim());
+      console.log("Pets in space:", pets);
 
-      // if (pets.length > 0) {
-      //   await setSessionAndPet(spaceName, nickname, pets[0].name, pets[0].breed);
-      //   router.push("/home" as any);
-      // } else {
-      //   setErrorMessage("The space does not exist");
-      // }
+      if (pets.length > 0) {
+        // 2. Store session and pet info locally
+        StorageService.setSession(nickname.trim(), spaceName.trim());
+        StorageService.setPet(pets[0].name, pets[0].breed);
+        StorageService.storeRecentSpace(spaceName.trim());
 
-      // Temporary: just navigate to home
-      setErrorMessage("");
-      router.push("/home" as any);
+        // 3. Clear old goodies data for this space
+        StorageService.setGoodiesOwned([
+          { id: 1, type: 1 },
+          { id: 23, type: 2 },
+          { id: 31, type: 3 }
+        ]);
+        StorageService.setPutOnGoodies([false, true, false]);
+
+        // 4. Navigate to home
+        console.log("Navigating to home...");
+        router.replace("/home" as any);
+      } else {
+        setErrorMessage("The space does not exist");
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Error entering space:", err);
       setErrorMessage("Failed to enter space. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,8 +140,16 @@ export default function Creation2() {
             />
           </View>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={handleEnterSpace}>
-            <Text style={styles.primaryButtonText}>Enter space</Text>
+          <TouchableOpacity 
+            style={[styles.primaryButton, isLoading && styles.primaryButtonDisabled]} 
+            onPress={handleEnterSpace}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Enter space</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -278,6 +311,10 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 10 },
     elevation: 6,
+  },
+  primaryButtonDisabled: {
+    backgroundColor: "#CCCCCC",
+    shadowOpacity: 0.2,
   },
   primaryButtonText: {
     color: "#fff",
